@@ -61,10 +61,12 @@ const Dashboard: React.FC = () => {
     async function loadFoods(): Promise<void> {
       const { data } = await api.get<Food[]>('foods');
 
-      const loadedFoods = data.map(food => ({
-        ...food,
-        formattedPrice: formatValue(food.price),
-      }));
+      const loadedFoods = data
+        .filter(food => food.name.includes(searchValue))
+        .map(food => ({
+          ...food,
+          formattedPrice: formatValue(food.price),
+        }));
 
       setFoods(loadedFoods);
     }
