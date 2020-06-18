@@ -35,6 +35,7 @@ interface Food {
   price: number;
   thumbnail_url: string;
   formattedPrice: string;
+  category: number;
 }
 
 interface Category {
@@ -62,7 +63,11 @@ const Dashboard: React.FC = () => {
       const { data } = await api.get<Food[]>('foods');
 
       const loadedFoods = data
-        .filter(food => food.name.includes(searchValue))
+        .filter(
+          food =>
+            food.name.includes(searchValue) &&
+            (selectedCategory ? food.category === selectedCategory : true),
+        )
         .map(food => ({
           ...food,
           formattedPrice: formatValue(food.price),
@@ -85,7 +90,7 @@ const Dashboard: React.FC = () => {
   }, []);
 
   function handleSelectCategory(id: number): void {
-    // Select / deselect category
+    setSelectedCategory(old => (old !== id ? id : undefined));
   }
 
   return (
