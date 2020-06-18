@@ -80,8 +80,13 @@ const FoodDetails: React.FC = () => {
         formattedPrice: formatValue(data.price),
       };
 
+      const loadedExtras = loadedFood.extras.map(extra => ({
+        ...extra,
+        quantity: 0,
+      }));
+
       setFood(loadedFood);
-      setExtras(loadedFood.extras);
+      setExtras(loadedExtras);
     }
 
     loadFood();
@@ -108,7 +113,16 @@ const FoodDetails: React.FC = () => {
   }, [isFavorite, food]);
 
   const cartTotal = useMemo(() => {
-    // Calculate cartTotal
+    const foodValueTotal = food.price * foodQuantity;
+
+    const extrasValueTotal = extras.reduce(
+      (accumulator, extra) => accumulator + extra.value * extra.quantity,
+      0,
+    );
+
+    const total = foodValueTotal + extrasValueTotal;
+
+    return formatValue(total);
   }, [extras, food, foodQuantity]);
 
   async function handleFinishOrder(): Promise<void> {
