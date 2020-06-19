@@ -73,11 +73,14 @@ const FoodDetails: React.FC = () => {
 
   useEffect(() => {
     async function loadFood(): Promise<void> {
-      const { data } = await api.get<Food>(`foods/${routeParams.id}`);
+      const [{ data: foodData }, { data: favoritesData }] = await Promise.all([
+        api.get<Food>(`foods/${routeParams.id}`),
+        api.get<Food[]>('favorites'),
+      ]);
 
       const loadedFood = {
-        ...data,
-        formattedPrice: formatValue(data.price),
+        ...foodData,
+        formattedPrice: formatValue(foodData.price),
       };
 
       const loadedExtras = loadedFood.extras.map(extra => ({
@@ -87,6 +90,10 @@ const FoodDetails: React.FC = () => {
 
       setFood(loadedFood);
       setExtras(loadedExtras);
+
+      const favorite = favoritesData.find(fav => fav.id === routeParams.id);
+
+      setIsFavorite(!!favorite);
     }
 
     loadFood();
@@ -126,8 +133,15 @@ const FoodDetails: React.FC = () => {
     setFoodQuantity(old => (old > 1 ? old - 1 : 1));
   }
 
-  const toggleFavorite = useCallback(() => {
-    // Toggle if food is favorite or not
+  const toggleFavorite = useCallback(async () => {
+    if (isFavorite) {
+      api.delete(`favorites/${food.id}`);
+    } else {
+      const { extras: a, formattedPrice: b, ...foodProps } = food;
+      api.post('favorites', foodProps);
+    }
+
+    setIsFavorite(old => !old);
   }, [isFavorite, food]);
 
   const cartTotal = useMemo(() => {
@@ -144,7 +158,18 @@ const FoodDetails: React.FC = () => {
   }, [extras, food, foodQuantity]);
 
   async function handleFinishOrder(): Promise<void> {
-    // Finish the order and save on the API
+    const { id, ...foodProps } = food;
+
+    await api.post('orders', {
+      product_id: id,
+      ...foodProps,
+      extras,
+    });
+
+    navigation.reset({
+      routes: [{ name: 'MainBottom', params: { screen: 'Dashboard' } }],
+      index: 0,
+    });
   }
 
   // Calculate the correct icon name
