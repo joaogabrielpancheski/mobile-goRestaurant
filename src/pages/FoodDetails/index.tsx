@@ -73,14 +73,11 @@ const FoodDetails: React.FC = () => {
 
   useEffect(() => {
     async function loadFood(): Promise<void> {
-      const [{ data: foodData }, { data: favoritesData }] = await Promise.all([
-        api.get<Food>(`foods/${routeParams.id}`),
-        api.get<Food[]>('favorites'),
-      ]);
+      const { data } = await api.get<Food>(`foods/${routeParams.id}`);
 
       const loadedFood = {
-        ...foodData,
-        formattedPrice: formatValue(foodData.price),
+        ...data,
+        formattedPrice: formatValue(data.price),
       };
 
       const loadedExtras = loadedFood.extras.map(extra => ({
@@ -90,14 +87,22 @@ const FoodDetails: React.FC = () => {
 
       setFood(loadedFood);
       setExtras(loadedExtras);
-
-      const favorite = favoritesData.find(fav => fav.id === routeParams.id);
-
-      setIsFavorite(!!favorite);
     }
 
     loadFood();
   }, [routeParams]);
+
+  useEffect(() => {
+    async function loadFavorites(): Promise<void> {
+      const { data } = await api.get<Food[]>('favorites');
+
+      const favorite = data.find(fav => fav.id === routeParams.id);
+
+      setIsFavorite(!!favorite);
+    }
+
+    loadFavorites();
+  }, [routeParams.id]);
 
   function handleIncrementExtra(id: number): void {
     setExtras(old =>
